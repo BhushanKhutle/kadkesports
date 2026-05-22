@@ -88,7 +88,6 @@ services:
       S3_BUCKET: ${S3_BUCKET:-kadke-products}
       CORS_ORIGIN: http://localhost:3000
     ports: ["4000:4000"]
-    command: node dist/main.js
     networks: [kadke]
 
   frontend:
