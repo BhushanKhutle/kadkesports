@@ -1,11 +1,11 @@
 # ─── Stage 1: Build ──────────────────────────────────
 FROM node:20-alpine AS builder
-RUN apk add --no-cache openssl libc6-compat
+RUN apk add --no-cache openssl libc6-compat python3 make g++
 WORKDIR /app
 
 # install pnpm
 RUN corepack enable && corepack prepare pnpm@8.15.0 --activate
-RUN apk add --no-cache openssl libc6-compat
+RUN apk add --no-cache openssl libc6-compat python3 make g++
 
 COPY package.json pnpm-lock.yaml* ./
 COPY prisma ./prisma

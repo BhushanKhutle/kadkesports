@@ -3,7 +3,7 @@
  * Realistic catalog: Cricket, Football, Jerseys, Shoes, Tracksuits, Fitness, Accessories, Custom
  */
 import { PrismaClient, Role, CouponType } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
