@@ -1,0 +1,55 @@
+{{- if .Values.minio.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-minio
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: { requests: { storage: {{ .Values.minio.persistence.size }} } }
+  {{- with .Values.minio.persistence.storageClass }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-minio
+spec:
+  selector: { app: minio, release: {{ .Release.Name }} }
+  ports:
+    - { name: api,     port: 9000 }
+    - { name: console, port: 9001 }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-minio
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: minio, release: {{ .Release.Name }} } }
+  template:
+    metadata: { labels: { app: minio, release: {{ .Release.Name }} } }
+    spec:
+      containers:
+        - name: minio
+          image: {{ .Values.minio.image }}
+          args: [server, /data, --console-address, ":9001"]
+          ports:
+            - { containerPort: 9000 }
+            - { containerPort: 9001 }
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom: { secretKeyRef: { name: {{ .Release.Name }}-secrets, key: S3_ACCESS_KEY } }
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom: { secretKeyRef: { name: {{ .Release.Name }}-secrets, key: S3_SECRET_KEY } }
+          readinessProbe:
+            httpGet: { path: /minio/health/ready, port: 9000 }
+          livenessProbe:
+            httpGet: { path: /minio/health/live, port: 9000 }
+          volumeMounts: [{ name: data, mountPath: /data }]
+          resources: {{- toYaml .Values.minio.resources | nindent 12 }}
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: {{ .Release.Name }}-minio }
+{{- end }}

@@ -1,0 +1,10 @@
+apiVersion: v2
+name: kadke-sports
+description: Production-ready ecommerce platform — frontend, backend, postgres, redis, minio
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords: [ecommerce, sports, nextjs, nestjs, postgres]
+maintainers:
+  - name: Kadke Sports
+    email: ops@kadkesports.com

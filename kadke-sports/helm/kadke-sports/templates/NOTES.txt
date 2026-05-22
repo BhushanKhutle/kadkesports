@@ -1,0 +1,31 @@
+╔════════════════════════════════════════════════════╗
+║   🏏  Kadke Sports deployed successfully!         ║
+╚════════════════════════════════════════════════════╝
+
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+
+▶ Check pods:
+    kubectl -n {{ .Release.Namespace }} get pods -w
+
+▶ Visit:
+    Frontend  → https://{{ .Values.global.domain }}
+    API docs  → https://{{ .Values.global.apiDomain }}/api/docs
+
+▶ Seed data (first deploy):
+    kubectl -n {{ .Release.Namespace }} exec deploy/{{ .Release.Name }}-backend -- node prisma/seed.js
+
+▶ Tail logs:
+    kubectl -n {{ .Release.Namespace }} logs -l app=backend -f
+
+▶ Upgrade:
+    helm upgrade {{ .Release.Name }} ./helm/kadke-sports -n {{ .Release.Namespace }}
+
+▶ Rollback:
+    helm rollback {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+Default seeded creds:
+    admin@kadkesports.com / Admin@123
+    user@kadkesports.com  / User@123
+
+⚠️  CHANGE THESE AND ALL SECRETS BEFORE GOING LIVE.

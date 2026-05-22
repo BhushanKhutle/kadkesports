@@ -1,0 +1,77 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options: [dev, prod]
+        default: dev
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment || (github.ref == 'refs/heads/main' && 'prod' || 'dev') }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment || (github.ref == 'refs/heads/main' && 'prod' || 'dev') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with: { version: 'v1.29.0' }
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with: { version: 'v3.14.0' }
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Determine namespace
+        id: ns
+        run: |
+          ENV="${{ inputs.environment || (github.ref == 'refs/heads/main' && 'prod' || 'dev') }}"
+          echo "namespace=kadke-${ENV}" >> $GITHUB_OUTPUT
+          echo "environment=${ENV}" >> $GITHUB_OUTPUT
+
+      - name: Helm upgrade
+        run: |
+          helm upgrade --install kadke ./helm/kadke-sports \
+            --namespace ${{ steps.ns.outputs.namespace }} \
+            --create-namespace \
+            --values ./helm/kadke-sports/values.yaml \
+            --set backend.image.tag=sha-${{ github.sha }} \
+            --set frontend.image.tag=sha-${{ github.sha }} \
+            --set-string secrets.databaseUrl="${{ secrets.DATABASE_URL }}" \
+            --set-string secrets.jwtAccessSecret="${{ secrets.JWT_ACCESS_SECRET }}" \
+            --set-string secrets.jwtRefreshSecret="${{ secrets.JWT_REFRESH_SECRET }}" \
+            --set-string secrets.razorpayKeyId="${{ secrets.RAZORPAY_KEY_ID }}" \
+            --set-string secrets.razorpayKeySecret="${{ secrets.RAZORPAY_KEY_SECRET }}" \
+            --set-string secrets.razorpayWebhookSecret="${{ secrets.RAZORPAY_WEBHOOK_SECRET }}" \
+            --set-string secrets.googleClientId="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            --set-string secrets.googleClientSecret="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+            --set-string secrets.s3SecretKey="${{ secrets.S3_SECRET_KEY }}" \
+            --wait --timeout 10m
+
+      - name: Verify rollout
+        run: |
+          kubectl -n ${{ steps.ns.outputs.namespace }} rollout status deploy/kadke-backend --timeout=5m
+          kubectl -n ${{ steps.ns.outputs.namespace }} rollout status deploy/kadke-frontend --timeout=5m
+
+      - name: Smoke test
+        run: |
+          ENDPOINT=$(kubectl -n ${{ steps.ns.outputs.namespace }} get ingress kadke-ingress -o jsonpath='{.spec.rules[2].host}' || echo "")
+          if [ -n "$ENDPOINT" ]; then
+            curl -fsS "https://$ENDPOINT/api/health" || exit 1
+          fi

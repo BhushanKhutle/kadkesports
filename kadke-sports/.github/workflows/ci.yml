@@ -1,0 +1,152 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: ${{ github.repository_owner }}
+
+jobs:
+  # ─── Lint & Test ────────────────────────────────────
+  test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kadke
+          POSTGRES_PASSWORD: kadke_pass
+          POSTGRES_DB: kadke_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with: { version: 8.15.0 }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        working-directory: apps/backend
+        run: pnpm prisma generate
+        env:
+          DATABASE_URL: postgresql://kadke:kadke_pass@localhost:5432/kadke_test?schema=public
+
+      - name: Run migrations
+        working-directory: apps/backend
+        run: pnpm prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://kadke:kadke_pass@localhost:5432/kadke_test?schema=public
+
+      - name: Lint
+        run: pnpm lint
+        continue-on-error: true
+
+      - name: Backend tests
+        working-directory: apps/backend
+        run: pnpm test
+        env:
+          DATABASE_URL: postgresql://kadke:kadke_pass@localhost:5432/kadke_test?schema=public
+          REDIS_URL: redis://localhost:6379
+          JWT_ACCESS_SECRET: test-access-secret-min-32-chars-long
+          JWT_REFRESH_SECRET: test-refresh-secret-min-32-chars-long
+
+      - name: Build frontend
+        working-directory: apps/frontend
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000/api
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          NEXT_TELEMETRY_DISABLED: 1
+
+  # ─── Build & Push Images ────────────────────────────
+  build:
+    name: Build & Push Docker Images
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=stable,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build & push
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/${{ matrix.service }}
+          file: apps/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ─── Security Scan ──────────────────────────────────
+  scan:
+    name: Trivy Scan
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      matrix:
+        service: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:latest
+          format: sarif
+          output: trivy-${{ matrix.service }}.sarif
+          severity: CRITICAL,HIGH
+        continue-on-error: true
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-${{ matrix.service }}.sarif

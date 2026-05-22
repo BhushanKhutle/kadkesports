@@ -1,0 +1,16 @@
+node_modules
+.pnpm-store
+dist
+build
+.next
+.turbo
+coverage
+.env
+.env.local
+*.log
+.DS_Store
+.idea
+.vscode
+*.tsbuildinfo
+prisma/migrations/.DS_Store
+helm-charts.tgz
