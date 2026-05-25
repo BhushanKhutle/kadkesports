@@ -1,0 +1,103 @@
+global:
+  domain: kadkesports.com
+  apiDomain: api.kadkesports.com
+  imageRegistry: ghcr.io/kadke
+  imagePullPolicy: IfNotPresent
+
+backend:
+  enabled: true
+  image:
+    repository: ghcr.io/kadke/backend
+    tag: latest
+  replicaCount: 3
+  service:
+    port: 80
+    targetPort: 4000
+  resources:
+    requests: { cpu: 200m, memory: 256Mi }
+    limits:   { cpu: 1000m, memory: 768Mi }
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 20
+    targetCPU: 70
+  pdb:
+    minAvailable: 2
+  runMigrations: true
+
+frontend:
+  enabled: true
+  image:
+    repository: ghcr.io/kadke/frontend
+    tag: latest
+  replicaCount: 3
+  service:
+    port: 80
+    targetPort: 3000
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 500m, memory: 512Mi }
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 20
+    targetCPU: 70
+
+postgres:
+  enabled: true
+  image: postgres:16-alpine
+  persistence:
+    size: 20Gi
+    storageClass: ""
+  resources:
+    requests: { cpu: 250m, memory: 512Mi }
+    limits:   { cpu: 1000m, memory: 1Gi }
+
+redis:
+  enabled: true
+  image: redis:7-alpine
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits:   { cpu: 500m, memory: 512Mi }
+
+minio:
+  enabled: true
+  image: minio/minio:latest
+  persistence:
+    size: 50Gi
+    storageClass: ""
+  bucket: kadke-products
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 500m, memory: 1Gi }
+
+ingress:
+  enabled: true
+  className: nginx
+  tls: true
+  clusterIssuer: letsencrypt-prod
+
+# Secrets — override these per environment with --set-string or external secret manager
+secrets:
+  databaseUrl: "postgresql://kadke:CHANGE_ME@postgres:5432/kadke_sports?schema=public"
+  postgresUser: "kadke"
+  postgresPassword: "CHANGE_ME"
+  postgresDb: "kadke_sports"
+  jwtAccessSecret: "CHANGE_ME_min_32_chars_random_string"
+  jwtRefreshSecret: "CHANGE_ME_min_32_chars_different_random"
+  razorpayKeyId: "rzp_test_xxxxx"
+  razorpayKeySecret: "xxxxx"
+  razorpayWebhookSecret: "xxxxx"
+  googleClientId: ""
+  googleClientSecret: ""
+  s3AccessKey: "minioadmin"
+  s3SecretKey: "CHANGE_ME"
+
+config:
+  nodeEnv: "production"
+  port: "4000"
+  apiPrefix: "api"
+  jwtAccessExpires: "15m"
+  jwtRefreshExpires: "7d"
+  throttleTtl: "60"
+  throttleLimit: "100"

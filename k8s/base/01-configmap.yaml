@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kadke-config
+  namespace: kadke
+data:
+  NODE_ENV: "production"
+  PORT: "4000"
+  API_PREFIX: "api"
+  CORS_ORIGIN: "https://kadkesports.com"
+  JWT_ACCESS_EXPIRES: "15m"
+  JWT_REFRESH_EXPIRES: "7d"
+  S3_ENDPOINT: "http://minio:9000"
+  S3_BUCKET: "kadke-products"
+  REDIS_URL: "redis://redis:6379"
+  THROTTLE_TTL: "60"
+  THROTTLE_LIMIT: "100"

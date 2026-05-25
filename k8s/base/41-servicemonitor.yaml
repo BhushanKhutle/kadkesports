@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kadke-backend
+  namespace: kadke
+  labels:
+    release: prometheus  # adjust to your kube-prometheus-stack release
+spec:
+  selector:
+    matchLabels: { app: backend }
+  endpoints:
+    - port: http
+      path: /api/metrics
+      interval: 30s
