@@ -109,14 +109,18 @@ export class OrdersService {
     return { items, total };
   }
 
-  async one(userId: string, orderNumber: string) {
+  async one(userId: string, orderNumber: string, isAdmin = false) {
     const o = await this.prisma.order.findUnique({
       where: { orderNumber },
-      include: { items: true, payment: true, address: true, user: { select: { name: true, email: true } } },
+      include: { items: { include: { product: { select: { sku: true, images: true } } } }, payment: true, address: true, user: { select: { name: true, email: true } } },
     });
     if (!o) throw new NotFoundException('Order not found');
-    if (o.userId !== userId) throw new NotFoundException('Order not found');
+    if (!isAdmin && o.userId !== userId) throw new NotFoundException('Order not found');
     return o;
+  }
+
+  async updateNotes(id: string, notes: string) {
+    return this.prisma.order.update({ where: { id }, data: { notes } });
   }
 
   async listAll(page = 1, limit = 20, status?: OrderStatus) {
@@ -144,13 +148,19 @@ class OrdersController {
   constructor(private svc: OrdersService) {}
   @Post() create(@CurrentUser() u: any, @Body() d: CreateOrderDto) { return this.svc.create(u.id, d); }
   @Get('my') mine(@CurrentUser() u: any, @Query('page') page = 1) { return this.svc.listMine(u.id, Number(page)); }
-  @Get(':orderNumber') one(@CurrentUser() u: any, @Param('orderNumber') n: string) { return this.svc.one(u.id, n); }
+  @Get(':orderNumber') one(@CurrentUser() u: any, @Param('orderNumber') n: string) {
+    return this.svc.one(u.id, n, u.role === 'ADMIN');
+  }
   // Admin
   @Roles(Role.ADMIN) @Get() all(@Query('page') page = 1, @Query('status') status?: OrderStatus) {
     return this.svc.listAll(Number(page), 20, status);
   }
   @Roles(Role.ADMIN) @Post(':id/status') updateStatus(@Param('id') id: string, @Body('status') status: OrderStatus) {
     return this.svc.updateStatus(id, status);
+  }
+
+  @Roles(Role.ADMIN) @Post(':id/notes') updateNotes(@Param('id') id: string, @Body('notes') notes: string) {
+    return this.svc.updateNotes(id, notes ?? '');
   }
 }
 

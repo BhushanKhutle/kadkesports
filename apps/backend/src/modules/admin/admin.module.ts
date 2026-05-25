@@ -22,10 +22,13 @@ class AdminService {
       this.prisma.user.count(),
       this.prisma.product.count({ where: { isActive: true } }),
       this.prisma.order.count(),
-      this.prisma.order.count({ where: { paymentStatus: PaymentStatus.SUCCESS } }),
+      this.prisma.order.count({ where: { status: { in: [OrderStatus.PAID, OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.DELIVERED] } } }),
       this.prisma.order.count({ where: { status: OrderStatus.PENDING } }),
       this.prisma.order.aggregate({
-        where: { paymentStatus: PaymentStatus.SUCCESS, createdAt: { gte: since30 } },
+        where: {
+          status: { in: [OrderStatus.PAID, OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.DELIVERED] },
+          createdAt: { gte: since30 },
+        },
         _sum: { total: true }, _count: true,
       }),
       this.prisma.order.findMany({
@@ -42,7 +45,8 @@ class AdminService {
       SELECT TO_CHAR(DATE_TRUNC('day', "createdAt"), 'YYYY-MM-DD') AS day,
              COALESCE(SUM(total), 0)::float AS revenue
       FROM "Order"
-      WHERE "paymentStatus" = 'SUCCESS' AND "createdAt" >= ${since7}
+      WHERE status IN ('PAID','PROCESSING','SHIPPED','DELIVERED')
+        AND "createdAt" >= ${since7}
       GROUP BY day ORDER BY day ASC;
     `;
 

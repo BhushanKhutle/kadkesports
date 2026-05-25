@@ -13,6 +13,13 @@ interface Address { id: string; fullName: string; line1: string; city: string; p
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const currentUser = useAppSelector(s => s.user.user);
+  useEffect(() => {
+    if (currentUser?.role === 'ADMIN') {
+      toast.error('Admins cannot place orders. Use the admin panel.');
+      router.push('/admin');
+    }
+  }, [currentUser, router]);
   const cart = useAppSelector((s) => s.cart);
   const user = useAppSelector((s) => s.user.user);
   const dispatch = useAppDispatch();

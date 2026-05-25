@@ -90,9 +90,13 @@ export function Navbar() {
             <button onClick={toggleTheme} aria-label="theme" className="p-2 rounded-full hover:bg-ink-100 dark:hover:bg-ink-900">
               {dark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
-            <Link href="/wishlist" className="p-2 rounded-full hover:bg-ink-100 dark:hover:bg-ink-900">
-              <Heart className="w-5 h-5" />
-            </Link>
+            {user?.role !== 'ADMIN' && (
+              <Link href="/wishlist" className="p-2 rounded-full hover:bg-ink-100 dark:hover:bg-ink-900">
+                <Heart className="w-5 h-5" />
+              </Link>
+            )}
+            {user?.role !== 'ADMIN' && (
+
             <Link href="/cart" className="relative p-2 rounded-full hover:bg-ink-100 dark:hover:bg-ink-900">
               <ShoppingBag className="w-5 h-5" />
               {cart.count > 0 && (
@@ -101,6 +105,7 @@ export function Navbar() {
                 </span>
               )}
             </Link>
+            )}
             <Link href={user ? '/profile' : '/login'} className="p-2 rounded-full hover:bg-ink-100 dark:hover:bg-ink-900">
               <User className="w-5 h-5" />
             </Link>
