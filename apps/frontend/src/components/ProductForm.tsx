@@ -185,9 +185,9 @@ export function ProductForm({ initial, productId }: ProductFormProps) {
       {/* Variants */}
       <section className="card p-6 space-y-4">
         <h2 className="font-display text-xl font-bold mb-2">Variants</h2>
-        <Chips label="SIZES" items={sizes} newVal={newSize} setNewVal={setNewSize} onAdd={() => addToList(newSize, sizes, setSizes, setNewSize)} onRemove={(i) => removeFromList(i, sizes, setSizes)} placeholder="S, M, L, XL or 7, 8, 9..." />
-        <Chips label="COLORS" items={colors} newVal={newColor} setNewVal={setNewColor} onAdd={() => addToList(newColor, colors, setColors, setNewColor)} onRemove={(i) => removeFromList(i, colors, setColors)} placeholder="Black, Navy, Red..." />
-        <Chips label="TAGS" items={tags} newVal={newTag} setNewVal={setNewTag} onAdd={() => addToList(newTag, tags, setTags, setNewTag)} onRemove={(i) => removeFromList(i, tags, setTags)} placeholder="bestseller, new..." />
+        <Chips label="SIZES" items={sizes} newVal={newSize} setNewVal={setNewSize} onAdd={() => addToList(newSize, sizes, setSizes, setNewSize)} onRemove={(i: number) => removeFromList(i, sizes, setSizes)} placeholder="S, M, L, XL or 7, 8, 9..." />
+        <Chips label="COLORS" items={colors} newVal={newColor} setNewVal={setNewColor} onAdd={() => addToList(newColor, colors, setColors, setNewColor)} onRemove={(i: number) => removeFromList(i, colors, setColors)} placeholder="Black, Navy, Red..." />
+        <Chips label="TAGS" items={tags} newVal={newTag} setNewVal={setNewTag} onAdd={() => addToList(newTag, tags, setTags, setNewTag)} onRemove={(i: number) => removeFromList(i, tags, setTags)} placeholder="bestseller, new..." />
       </section>
 
       {/* SEO */}
