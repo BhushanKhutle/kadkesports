@@ -17,7 +17,7 @@ export default function AdminProductsPage() {
   const [q, setQ] = useState('');
 
   useEffect(() => {
-    if (user && user.role !== 'ADMIN') { router.push('/'); return; }
+    if (!user || user.role !== 'ADMIN') { router.push('/login?next=/admin'); return; }
     load();
   }, [user, router]);
 

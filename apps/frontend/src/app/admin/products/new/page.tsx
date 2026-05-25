@@ -9,7 +9,7 @@ import { useAppSelector } from '@/store';
 export default function NewProductPage() {
   const user = useAppSelector(s => s.user.user);
   const router = useRouter();
-  useEffect(() => { if (user && user.role !== 'ADMIN') router.push('/'); }, [user, router]);
+  useEffect(() => { if (!user || user.role !== 'ADMIN') { router.push('/login?next=/admin'); return; } }, [user, router]);
 
   return (
     <div className="container-x py-10">

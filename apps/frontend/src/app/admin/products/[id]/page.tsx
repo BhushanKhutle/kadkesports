@@ -15,7 +15,7 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user && user.role !== 'ADMIN') { router.push('/'); return; }
+    if (!user || user.role !== 'ADMIN') { router.push('/login?next=/admin'); return; }
     // Fetch the product by id — note we need to look it up since the public route uses slug
     api.get(`/products?limit=60`).then(({ data }) => {
       const found = (data.items ?? []).find((p: any) => p.id === id);

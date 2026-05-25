@@ -12,7 +12,7 @@ export default function AdminPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (user && user.role !== 'ADMIN') { router.push('/'); return; }
+    if (!user || user.role !== 'ADMIN') { router.push('/login?next=/admin'); return; }
     api.get('/admin/dashboard').then(({ data }) => setData(data));
   }, [user, router]);
 
