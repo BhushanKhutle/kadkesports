@@ -27,7 +27,10 @@ export default function AdminPage() {
 
   return (
     <div className="container-x py-10">
-      <h1 className="font-display text-5xl font-bold mb-10">Dashboard</h1>
+      <div className="flex items-center justify-between mb-10 flex-wrap gap-4">
+        <h1 className="font-display text-5xl font-bold">Dashboard</h1>
+        <a href="/admin/products" className="btn-primary">Manage products →</a>
+      </div>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         {tiles.map((t, i) => (
           <div key={i} className="card p-6">
