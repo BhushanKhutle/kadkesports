@@ -1,11 +1,19 @@
 import axios, { AxiosError } from 'axios';
 
-// Server-side rendering: use the internal Docker DNS name
-// Client-side (browser): use the relative /api path (proxied by nginx)
-export const API_URL =
-  typeof window === 'undefined'
-    ? process.env.API_URL_INTERNAL ?? 'http://backend:4000/api'
-    : process.env.NEXT_PUBLIC_API_URL ?? '/api';
+// Resolve API base URL — handles both SSR (Docker network) and browser (relative)
+function resolveApiUrl(): string {
+  const isServer = typeof window === 'undefined';
+  if (isServer) {
+    const internal = process.env.API_URL_INTERNAL;
+    if (internal && internal.trim()) return internal;
+    return 'http://backend:4000/api';
+  }
+  const pub = process.env.NEXT_PUBLIC_API_URL;
+  if (pub && pub.trim()) return pub;
+  return '/api';
+}
+
+export const API_URL = resolveApiUrl();
 
 export const api = axios.create({
   baseURL: API_URL,
