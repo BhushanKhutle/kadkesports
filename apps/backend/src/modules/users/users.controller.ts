@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEmail, IsEnum } from 'class-validator';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -22,6 +22,24 @@ class AddressDto {
   @IsString() pincode: string;
   @IsOptional() @IsString() country?: string;
   @IsOptional() @IsBoolean() isDefault?: boolean;
+}
+
+
+class CreateStaffDto {
+  @IsEmail() email: string;
+  @IsString() name: string;
+  @IsString() password: string;
+  @IsEnum(Role) role: Role;
+  @IsOptional() @IsString() phone?: string;
+  @IsOptional() @IsString() roleId?: string;
+}
+
+class AdminUpdateUserDto {
+  @IsOptional() @IsString() name?: string;
+  @IsOptional() @IsString() phone?: string;
+  @IsOptional() @IsEnum(Role) role?: Role;
+  @IsOptional() @IsString() roleId?: string;
+  @IsOptional() @IsBoolean() isActive?: boolean;
 }
 
 @ApiTags('Users')
@@ -67,4 +85,34 @@ export class UsersController {
   list(@Query('page') page = 1, @Query('limit') limit = 20) {
     return this.users.list(Number(page), Number(limit));
   }
+
+  // Admin user management
+  @Get('admin/all')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  listAll(@Query('search') search?: string) {
+    return this.users.listAll(search);
+  }
+
+  @Post('admin/create')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  createStaff(@Body() dto: CreateStaffDto) {
+    return this.users.createStaff(dto);
+  }
+
+  @Patch('admin/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  updateById(@Param('id') id: string, @Body() dto: AdminUpdateUserDto, @CurrentUser() me: any) {
+    return this.users.adminUpdate(id, dto, me.id);
+  }
+
+  @Delete('admin/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  deactivate(@Param('id') id: string, @CurrentUser() me: any) {
+    return this.users.deactivate(id, me.id);
+  }
+
 }

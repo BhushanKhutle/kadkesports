@@ -17,6 +17,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { CouponsModule } from './modules/coupons/coupons.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { RolesModule } from './modules/roles/roles.module';
 import { HealthController } from './common/health.controller';
 
 @Module({
@@ -42,6 +43,7 @@ import { HealthController } from './common/health.controller';
     CouponsModule,
     WishlistModule,
     AdminModule,
+    RolesModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

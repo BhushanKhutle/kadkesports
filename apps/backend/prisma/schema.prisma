@@ -71,6 +71,8 @@ model User {
   updatedAt     DateTime   @updatedAt
 
   @@index([email])
+  roleId         String?
+  customRole     CustomRole? @relation("UserRoleRef", fields: [roleId], references: [id])
 }
 
 model RefreshToken {
@@ -314,6 +316,19 @@ model Coupon {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
+
+model CustomRole {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  permissions String[] @default([])
+  isSystem    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]   @relation("UserRoleRef")
+}
+
 
 // ─── AUDIT ────────────────────────────────────────────
 
