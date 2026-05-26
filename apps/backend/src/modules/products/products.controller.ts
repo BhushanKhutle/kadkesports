@@ -5,6 +5,8 @@ import { ProductsService } from './products.service';
 import { CreateProductDto, UpdateProductDto, ProductQueryDto } from './products.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
+import { RequirePermission } from '../../common/decorators/permissions.decorator';
 import { Public, Roles } from '../../common/decorators/public.decorator';
 
 @ApiTags('Products')
@@ -50,24 +52,24 @@ export class ProductsController {
   }
 
   // ─── Admin ─────────────────────────────────────────
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @RequirePermission('products.create')
   @ApiBearerAuth()
   @Post()
   create(@Body() dto: CreateProductDto) {
     return this.products.create(dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @RequirePermission('products.edit')
   @ApiBearerAuth()
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
     return this.products.update(id, dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @RequirePermission('products.delete')
   @ApiBearerAuth()
   @Delete(':id')
   remove(@Param('id') id: string) {

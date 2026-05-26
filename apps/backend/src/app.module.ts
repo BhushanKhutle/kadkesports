@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, Reflector } from '@nestjs/core';
+import { PermissionsGuard } from './common/guards/permissions.guard';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 
 import { PrismaModule } from './prisma/prisma.module';

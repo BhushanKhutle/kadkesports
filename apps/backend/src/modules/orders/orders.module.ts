@@ -5,6 +5,8 @@ import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { PrismaService } from '../../prisma/prisma.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
+import { RequirePermission } from '../../common/decorators/permissions.decorator';
 import { CouponsModule, CouponsService } from '../coupons/coupons.module';
 import { CartModule, CartService } from '../cart/cart.module';
 import { CurrentUser, Roles } from '../../common/decorators/public.decorator';
@@ -142,7 +144,7 @@ export class OrdersService {
 
 @ApiTags('Orders')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller('orders')
 class OrdersController {
   constructor(private svc: OrdersService) {}
@@ -152,14 +154,14 @@ class OrdersController {
     return this.svc.one(u.id, n, u.role === 'ADMIN');
   }
   // Admin
-  @Roles(Role.ADMIN) @Get() all(@Query('page') page = 1, @Query('status') status?: OrderStatus) {
+  @RequirePermission('orders.view') @Get() all(@Query('page') page = 1, @Query('status') status?: OrderStatus) {
     return this.svc.listAll(Number(page), 20, status);
   }
-  @Roles(Role.ADMIN) @Post(':id/status') updateStatus(@Param('id') id: string, @Body('status') status: OrderStatus) {
+  @RequirePermission('orders.update_status') @Post(':id/status') updateStatus(@Param('id') id: string, @Body('status') status: OrderStatus) {
     return this.svc.updateStatus(id, status);
   }
 
-  @Roles(Role.ADMIN) @Post(':id/notes') updateNotes(@Param('id') id: string, @Body('notes') notes: string) {
+  @RequirePermission('orders.update_status') @Post(':id/notes') updateNotes(@Param('id') id: string, @Body('notes') notes: string) {
     return this.svc.updateNotes(id, notes ?? '');
   }
 }

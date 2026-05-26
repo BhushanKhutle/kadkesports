@@ -5,6 +5,8 @@ import { IsString, IsOptional, IsBoolean, IsEmail, IsEnum } from 'class-validato
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
+import { RequirePermission } from '../../common/decorators/permissions.decorator';
 import { CurrentUser, Roles } from '../../common/decorators/public.decorator';
 
 class UpdateProfileDto {
@@ -88,29 +90,29 @@ export class UsersController {
 
   // Admin user management
   @Get('admin/all')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @RequirePermission('users.view')
   listAll(@Query('search') search?: string) {
     return this.users.listAll(search);
   }
 
   @Post('admin/create')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @RequirePermission('users.create')
   createStaff(@Body() dto: CreateStaffDto) {
     return this.users.createStaff(dto);
   }
 
   @Patch('admin/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @RequirePermission('users.edit')
   updateById(@Param('id') id: string, @Body() dto: AdminUpdateUserDto, @CurrentUser() me: any) {
     return this.users.adminUpdate(id, dto, me.id);
   }
 
   @Delete('admin/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @RequirePermission('users.delete')
   deactivate(@Param('id') id: string, @CurrentUser() me: any) {
     return this.users.deactivate(id, me.id);
   }

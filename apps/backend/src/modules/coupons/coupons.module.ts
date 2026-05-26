@@ -5,6 +5,8 @@ import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsString } from 
 import { PrismaService } from '../../prisma/prisma.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
+import { RequirePermission } from '../../common/decorators/permissions.decorator';
 import { Roles } from '../../common/decorators/public.decorator';
 
 class CreateCouponDto {
@@ -97,19 +99,19 @@ class CouponsController {
   @UseGuards(JwtAuthGuard) @ApiBearerAuth() @Post('apply')
   apply(@Body() d: ApplyDto) { return this.svc.apply(d.code, d.subtotal); }
 
-  @UseGuards(JwtAuthGuard, RolesGuard) @Roles(Role.ADMIN) @ApiBearerAuth() @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard) @RequirePermission('coupons.view') @ApiBearerAuth() @Get()
   list() { return this.svc.list(); }
 
-  @UseGuards(JwtAuthGuard, RolesGuard) @Roles(Role.ADMIN) @ApiBearerAuth() @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard) @RequirePermission('coupons.view') @ApiBearerAuth() @Get(':id')
   one(@Param('id') id: string) { return this.svc.one(id); }
 
-  @UseGuards(JwtAuthGuard, RolesGuard) @Roles(Role.ADMIN) @ApiBearerAuth() @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard) @RequirePermission('coupons.create') @ApiBearerAuth() @Post()
   create(@Body() d: CreateCouponDto) { return this.svc.create(d); }
 
-  @UseGuards(JwtAuthGuard, RolesGuard) @Roles(Role.ADMIN) @ApiBearerAuth() @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard) @RequirePermission('coupons.edit') @ApiBearerAuth() @Patch(':id')
   update(@Param('id') id: string, @Body() d: UpdateCouponDto) { return this.svc.update(id, d); }
 
-  @UseGuards(JwtAuthGuard, RolesGuard) @Roles(Role.ADMIN) @ApiBearerAuth() @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard) @RequirePermission('coupons.delete') @ApiBearerAuth() @Delete(':id')
   remove(@Param('id') id: string) { return this.svc.remove(id); }
 }
 
